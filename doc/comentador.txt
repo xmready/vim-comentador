@@ -1,0 +1,2 @@
+*comentador.txt*	Simple yet powerful commenting plugin for vim
+*comentador* *vim-comentador*

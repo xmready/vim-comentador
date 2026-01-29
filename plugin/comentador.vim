@@ -16,6 +16,8 @@ command! -nargs=0 ComentadorToggle toggle.DoToggle()
 
 noremap <Plug>ComentadorToggle <ScriptCmd>toggle.DoToggle()<CR>
 
+noremenu Plugin.Comentador.Toggle <ScriptCmd>toggle.DoToggle()<CR>
+
 if !hasmapto('<Plug>ComentadorToggle')
     nmap gcc <Plug>ComentadorToggle
 endif

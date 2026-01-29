@@ -14,7 +14,7 @@ import autoload '../autoload/comentador/toggle.vim'
 
 command! -nargs=0 ComentadorToggle toggle.DoToggle()
 
-nnoremap <expr> <Plug>ComentadorToggle <SID>toggle.DoToggle()
+noremap <Plug>ComentadorToggle <ScriptCmd>toggle.DoToggle()<CR>
 
 if !hasmapto('<Plug>ComentadorToggle')
     nmap gcc <Plug>ComentadorToggle

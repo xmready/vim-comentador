@@ -12,8 +12,6 @@ g:loaded_comentador = 1
 
 import autoload '../autoload/comentador/toggle.vim'
 
-command! -nargs=0 ComentadorToggle toggle.DoToggle()
-
 noremap <Plug>ComentadorToggle <ScriptCmd>toggle.DoToggle()<CR>
 xnoremap <Plug>ComentadorToggleVisual <ScriptCmd>toggle.DoToggleVisual()<CR>
 

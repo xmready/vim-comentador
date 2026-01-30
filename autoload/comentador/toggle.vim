@@ -14,9 +14,7 @@ export def DoToggle(): void
         markers.bclose
     )
 
-    if result == 'blank'
-        return
-    elseif result == 'commented'
+    if result == 'commented'
         execute "normal! \<Esc>"
         var firstline: number = line("'<")
         var lastline: number = line("'>")

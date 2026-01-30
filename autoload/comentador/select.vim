@@ -7,9 +7,7 @@ export def DoSelectComment(
 ): string
     var ln: string = getline('.')
 
-    if match(ln, '^\s*$') != -1
-        return 'blank'
-    elseif match(ln, '^\s*' .. iopen) == 0
+    if match(ln, '^\s*' .. iopen) == 0
         normal! V
         return 'commented'
     elseif match(ln, '^\s*' .. bopen) == 0

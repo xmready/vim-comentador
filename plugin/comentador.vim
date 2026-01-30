@@ -28,5 +28,5 @@ endif
 
 augroup comentador
     autocmd!
-    autocmd FileType * if exists('b:comentador_markers') | unlet b:comentador_markers | endif
+    autocmd FileType * unlet! b:comentador_markers
 augroup END

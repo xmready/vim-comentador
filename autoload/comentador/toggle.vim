@@ -8,11 +8,7 @@ import autoload './comment.vim'
 export def DoToggle(): void
     var markers: dict<string> = parse.DoParseComments()
 
-    var result: string = select.DoSelectComment(
-        markers.iopen,
-        markers.bopen,
-        markers.bclose
-    )
+    var result: string = select.DoSelectComment(markers)
 
     if result == 'commented'
         execute "normal! \<Esc>"

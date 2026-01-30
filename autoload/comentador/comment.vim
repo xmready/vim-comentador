@@ -11,7 +11,9 @@ export def DoComment(
     var replace: string = '\1' .. iopen .. ' ' .. '\2' .. (empty(iclose) ? '' : ' ' .. iclose) .. '\3'
 
     for i: number in range(len(lines))
-        lines[i] = substitute(lines[i], match, replace, 'g')
+        if match(lines[i], '^\s*$') == -1
+            lines[i] = substitute(lines[i], match, replace, 'g')
+        endif
     endfor
 
     setline(firstline, lines)

@@ -8,7 +8,7 @@ export def DoComment(
 ): void
     var lines: list<string> = getline(firstline, lastline)
     var match: string = '\(^\s*\)\(.*\)\($\)'
-    var replace: string = '\1' .. iopen .. ' ' .. '\2' .. iclose .. '\3'
+    var replace: string = '\1' .. iopen .. ' ' .. '\2' .. (empty(iclose) ? '' : ' ' .. iclose) .. '\3'
 
     for i: number in range(len(lines))
         lines[i] = substitute(lines[i], match, replace, 'g')

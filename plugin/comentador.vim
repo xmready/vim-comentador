@@ -18,7 +18,7 @@ xnoremap <Plug>ComentadorToggleVisual <ScriptCmd>toggle.DoToggleVisual()<CR>
 noremenu Plugin.Comentador.Toggle <ScriptCmd>toggle.DoToggle()<CR>
 xnoremenu Plugin.Comentador.ToggleVisual <ScriptCmd>toggle.DoToggleVisual()<CR>
 
-if !hasmapto('<Plug>ComentadorToggle')
+if !hasmapto('<Plug>ComentadorToggle', 'n')
     nmap gcc <Plug>ComentadorToggle
 endif
 

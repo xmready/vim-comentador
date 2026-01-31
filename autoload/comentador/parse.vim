@@ -11,19 +11,14 @@ export def DoParseComments(): dict<string>
     var bclose: string = ''
 
     var cms_parts: list<string> = split(&commentstring, '%s', 1)
-    var cms_open = get(cms_parts, 0, '')
-    var cms_close = get(cms_parts, 1, '')
+    var cms_open: string = get(cms_parts, 0, '')
+    var cms_close: string = get(cms_parts, 1, '')
 
     if empty(cms_close)
         iopen = cms_open
         iclose = ''
 
         [bopen, bclose] = ParseBlockMarkers()
-
-        if empty(bopen)
-            bopen = ''
-            bclose = ''
-        endif
     else
         bopen = cms_open
         bclose = cms_close
@@ -48,7 +43,6 @@ export def DoParseComments(): dict<string>
         'bopen': bopen,
         'bclose': bclose
     }
-
 
     for key in keys(b:comentador_markers)
         b:comentador_markers[key] = trim(b:comentador_markers[key])

@@ -25,14 +25,10 @@ export def DoStripLine(
         markers: dict<string>
 ): list<string>
     var inline_pattern: string = '^\s*\zs' .. markers.iopen .. '\s*\ze' .. (empty(markers.iclose) ? '' : '\|\zs\s*' .. markers.iclose .. '\s*\ze$')
-
-    for i: number in range(len(lines))
-        lines[i] = substitute(lines[i], inline_pattern, '', 'g')
-    endfor
-
     var inline_block_pattern: string = '^\s*\zs' .. markers.bopen .. '\s*\ze\|\zs\s*' .. markers.bclose .. '\s*\ze$'
 
     for i: number in range(len(lines))
+        lines[i] = substitute(lines[i], inline_pattern, '', 'g')
         lines[i] = substitute(lines[i], inline_block_pattern, '', 'g')
     endfor
 

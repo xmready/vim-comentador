@@ -5,24 +5,42 @@ import autoload './select.vim'
 import autoload './strip.vim'
 import autoload './comment.vim'
 
-export def DoToggle(): void
+var startln: number = 0
+
+export def SetOperator(type: string, mode: string): string
+    startln = line('.')
+    &operatorfunc = type == 'block' ? 'g:ComentadorToggleBlock' : 'g:ComentadorToggle'
+    return mode == 'line' ? 'g@_' : 'g@'
+enddef
+
+def g:ComentadorToggle(_: string): void
     var markers: dict<string> = parse.DoParseComments()
-    var result: string = select.DoSelectComment(markers)
+    var firstline: number = line("'[")
+    var lastline: number = line("']")
+    execute 'normal! ' .. startln .. 'G'
+    var type: string = select.DoSelectComment(markers)
+    echom 'Comentador: ' .. type
     execute "normal! \<Esc>"
 
-    var firstline: number = line("'<")
-    var lastline: number = line("'>")
-    var lines: list<string> = getline(firstline, lastline)
+    if type == 'block_comment'
+        firstline = line("'<")
+        lastline = line("'>")
+    endif
 
-    if result == 'missing_bmark'
-        echoerr 'Comentador: No matching block mark found'
+    var lines: list<string> = getline(firstline, lastline)
+    var inline_pattern: string = empty(markers.bopen)
+        ? '^\s*' .. markers.iopen
+        : '^\s*\(' .. markers.iopen .. '\|' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$\)'
+    var has_inline: bool = (indexof(lines, (_, str) => match(str, inline_pattern) != -1) != -1)
+
+    if type == 'missing_bmark'
+        echoerr 'Comentador: No matching block marker found'
         return
-    elseif result == 'inline_comment' || result == 'inline_block_comment'
-        lines = strip.DoStripLine(lines, markers)
-    elseif result == 'block_comment'
+    elseif type == 'block_comment'
         lines = strip.DoStripBlock(lines, markers)
+    elseif (type == 'inline_comment' || type == 'inline_block_comment') || has_inline
         lines = strip.DoStripLine(lines, markers)
-    elseif result == 'uncommented' || result == 'blank_line'
+    elseif type == 'uncommented' || type == 'blank_line'
         lines = comment.DoInlineComment(lines, markers)
     endif
 
@@ -32,49 +50,68 @@ export def DoToggle(): void
         deletebufline('', firstline + len(lines), lastline)
     endif
 
-    if (result == 'blank_line') && !empty(markers.iclose)
+    if type == 'blank_line' && !empty(markers.iclose) && firstline == lastline
         search(markers.iclose, 'W', line('.'))
         normal! h
         startinsert
+    elseif startln < lastline
+        normal! ']
     else
-        normal! `<^
+        normal! '[
     endif
 enddef
 
-export def DoToggleInlineBlock(): void
+def g:ComentadorToggleBlock(_: string): void
     var markers: dict<string> = parse.DoParseComments()
 
-    if empty(markers.bopen)
+    if empty(markers.bopen) || empty(markers.bclose)
         echoerr 'Comentador: Block comment markers unavailable for this filetype'
         return
     endif
 
-    var result: string = select.DoSelectComment(markers)
+    var firstline: number = line("'[")
+    var lastline: number = line("']")
+    execute 'normal! ' .. startln .. 'G'
+    var type: string = select.DoSelectComment(markers)
     execute "normal! \<Esc>"
-    var firstline: number = line("'<")
-    var lastline: number = line("'>")
+
+    if type == 'missing_bmark'
+        echoerr 'Comentador: No matching block marker found'
+        return
+    elseif type == 'block_comment'
+        echoerr 'Comentador: Already inside a block comment'
+        return
+    endif
+
     var lines: list<string> = getline(firstline, lastline)
     var same_markers: bool = (markers.bopen == markers.iopen) && (markers.bclose == markers.iclose)
+    var inline_block_pattern: string = '^\s*' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$'
+    var block_pattern: string = '^\s*\(' .. markers.bopen .. '\|' .. markers.bclose .. '\)\s*$'
+    var has_inline_block: bool = (indexof(lines, (_, str) => match(str, inline_block_pattern) != -1) != -1)
+    var has_block: bool = (indexof(lines, (_, str) => match(str, block_pattern) != -1) != -1)
 
-    if result == 'missing_bmark'
-        echoerr 'Comentador: No matching block mark found'
+    if !has_inline_block && has_block
+        echoerr 'Comentador: Range contains multi-line block comment'
         return
-    elseif (result == 'inline_comment' && same_markers) || result == 'inline_block_comment'
+    elseif (type == 'inline_comment' && same_markers) || type == 'inline_block_comment' || (type != 'inline_comment' && has_inline_block)
         lines = strip.DoStripLine(lines, markers)
-    elseif (result == 'uncommented') || (result == 'blank_line')
+    elseif type == 'uncommented' || type == 'blank_line'
         lines = comment.DoInlineBlockComment(lines, markers)
-    elseif result == 'inline_comment'
+    elseif type == 'inline_comment'
+        echoerr 'Comentador: Existing inline comment'
         return
     endif
 
     setline(firstline, lines)
 
-    if result == 'blank_line' && !empty(markers.bclose)
+    if type == 'blank_line' && firstline == lastline
         search(markers.bclose, 'W', line('.'))
         normal! h
         startinsert
+    elseif startln < lastline
+        normal! ']
     else
-        normal! `<^
+        normal! '[
     endif
 enddef
 
@@ -89,12 +126,13 @@ export def DoToggleVisual(): void
     var first_is_bopen: bool = 0
     var last_is_bclose: bool = 0
     var has_iopen: bool = (indexof(lines, (_, str) => match(str, '^\s*' .. markers.iopen) != -1) != -1)
-    var has_bopen: bool = 0
+    var has_inline_block: bool = 0
 
     if !empty(markers.bopen)
         first_is_bopen = match(lines[0], '^\s*' .. markers.bopen .. '\s*$') != -1
         last_is_bclose = match(lines[-1], '^\s*' .. markers.bclose .. '\s*$') != -1
-        has_bopen = (indexof(lines, (_, str) => match(str, '^\s*' .. markers.bopen) != -1) != -1)
+        var inline_block_pattern: string = '^\s*' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$'
+        has_inline_block = (indexof(lines, (_, str) => match(str, inline_block_pattern) != -1) != -1)
     endif
 
     if first_is_bopen != last_is_bclose
@@ -102,7 +140,7 @@ export def DoToggleVisual(): void
         return
     elseif first_is_bopen && last_is_bclose
         lines = strip.DoStripBlock(lines, markers)
-    elseif has_iopen || has_bopen
+    elseif has_iopen || has_inline_block
         lines = strip.DoStripLine(lines, markers)
     else
         lines = comment.DoInlineComment(lines, markers)

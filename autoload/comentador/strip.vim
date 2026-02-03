@@ -2,13 +2,12 @@ vim9script
 
 export def DoStripBlock(
         lines: list<string>,
-        markers: dict<string>
+        markers: dict<any>
 ): list<string>
-    var block_pattern: string = '^\s*' .. markers.bopen .. '\s*$\|^\s*' .. markers.bclose .. '\s*$'
     var to_remove: list<number> = []
 
     for i: number in range(len(lines))
-        if match(lines[i], block_pattern) != -1
+        if match(lines[i], markers.patterns.block_either) != -1
             add(to_remove, i)
         endif
     endfor
@@ -22,15 +21,18 @@ enddef
 
 export def DoStripLine(
         lines: list<string>,
-        markers: dict<string>
+        markers: dict<any>
 ): list<string>
-    var inline_pattern: string = '^\s*\zs' .. markers.iopen .. '\s*\ze' .. (empty(markers.iclose) ? '' : '\|\zs\s*' .. markers.iclose .. '\s*\ze$')
-    var inline_block_pattern: string = '^\(\s*\)' .. markers.bopen .. '\s*\(.\{-}\)\s*' .. markers.bclose .. '\s*$'
-
-    for i: number in range(len(lines))
-        lines[i] = substitute(lines[i], inline_pattern, '', 'g')
-        lines[i] = substitute(lines[i], inline_block_pattern, '\1\2', '')
-    endfor
+    if !empty(markers.bopen) && !empty(markers.bclose)
+        for i: number in range(len(lines))
+            lines[i] = substitute(lines[i], markers.patterns.inline_strip, '', 'g')
+            lines[i] = substitute(lines[i], markers.patterns.inline_block_strip, '\1\2', '')
+        endfor
+    else
+        for i: number in range(len(lines))
+            lines[i] = substitute(lines[i], markers.patterns.inline_strip, '', 'g')
+        endfor
+    endif
 
     return lines
 enddef

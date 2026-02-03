@@ -14,7 +14,7 @@ export def SetOperator(type: string, mode: string): string
 enddef
 
 def g:ComentadorToggle(_: string): void
-    var markers: dict<string> = parse.DoParseComments()
+    var markers: dict<any> = parse.DoParseComments()
     var firstline: number = line("'[")
     var lastline: number = line("']")
     execute 'normal! ' .. startln .. 'G'
@@ -28,10 +28,7 @@ def g:ComentadorToggle(_: string): void
     endif
 
     var lines: list<string> = getline(firstline, lastline)
-    var inline_pattern: string = empty(markers.bopen)
-        ? '^\s*' .. markers.iopen
-        : '^\s*\(' .. markers.iopen .. '\|' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$\)'
-    var has_inline: bool = (indexof(lines, (_, str) => match(str, inline_pattern) != -1) != -1)
+    var has_inline: bool = (indexof(lines, (_, str) => match(str, markers.patterns.inline_either) != -1) != -1)
 
     if type == 'missing_bmark'
         echoerr 'Comentador: No matching block marker found'
@@ -62,7 +59,7 @@ def g:ComentadorToggle(_: string): void
 enddef
 
 def g:ComentadorToggleBlock(_: string): void
-    var markers: dict<string> = parse.DoParseComments()
+    var markers: dict<any> = parse.DoParseComments()
 
     if empty(markers.bopen) || empty(markers.bclose)
         echoerr 'Comentador: Block comment markers unavailable for this filetype'
@@ -85,10 +82,8 @@ def g:ComentadorToggleBlock(_: string): void
 
     var lines: list<string> = getline(firstline, lastline)
     var same_markers: bool = (markers.bopen == markers.iopen) && (markers.bclose == markers.iclose)
-    var inline_block_pattern: string = '^\s*' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$'
-    var block_pattern: string = '^\s*\(' .. markers.bopen .. '\|' .. markers.bclose .. '\)\s*$'
-    var has_inline_block: bool = (indexof(lines, (_, str) => match(str, inline_block_pattern) != -1) != -1)
-    var has_block: bool = (indexof(lines, (_, str) => match(str, block_pattern) != -1) != -1)
+    var has_inline_block: bool = (indexof(lines, (_, str) => match(str, markers.patterns.inline_block) != -1) != -1)
+    var has_block: bool = (indexof(lines, (_, str) => match(str, markers.patterns.block_either) != -1) != -1)
 
     if !has_inline_block && has_block
         echoerr 'Comentador: Range contains multi-line block comment'
@@ -118,21 +113,18 @@ enddef
 export def DoToggleVisual(): void
     execute "normal! \<Esc>"
 
-    var markers: dict<string> = parse.DoParseComments()
+    var markers: dict<any> = parse.DoParseComments()
     var firstline: number = line("'<")
     var lastline: number = line("'>")
     var lines: list<string> = getline(firstline, lastline)
 
     var first_is_bopen: bool = 0
     var last_is_bclose: bool = 0
-    var has_iopen: bool = (indexof(lines, (_, str) => match(str, '^\s*' .. markers.iopen) != -1) != -1)
-    var has_inline_block: bool = 0
+    var has_inline: bool = (indexof(lines, (_, str) => match(str, markers.patterns.inline_either) != -1) != -1)
 
     if !empty(markers.bopen)
-        first_is_bopen = match(lines[0], '^\s*' .. markers.bopen .. '\s*$') != -1
-        last_is_bclose = match(lines[-1], '^\s*' .. markers.bclose .. '\s*$') != -1
-        var inline_block_pattern: string = '^\s*' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$'
-        has_inline_block = (indexof(lines, (_, str) => match(str, inline_block_pattern) != -1) != -1)
+        first_is_bopen = match(lines[0], markers.patterns.bopen) != -1
+        last_is_bclose = match(lines[-1], markers.patterns.bclose) != -1
     endif
 
     if first_is_bopen != last_is_bclose
@@ -140,7 +132,7 @@ export def DoToggleVisual(): void
         return
     elseif first_is_bopen && last_is_bclose
         lines = strip.DoStripBlock(lines, markers)
-    elseif has_iopen || has_inline_block
+    elseif has_inline
         lines = strip.DoStripLine(lines, markers)
     else
         lines = comment.DoInlineComment(lines, markers)
@@ -158,7 +150,7 @@ enddef
 export def DoToggleBlockVisual(): void
     execute "normal! \<Esc>"
 
-    var markers: dict<string> = parse.DoParseComments()
+    var markers: dict<any> = parse.DoParseComments()
 
     if empty(markers.bopen) || empty(markers.bclose)
         echoerr 'Comentador: Block comment markers unavailable for this filetype'
@@ -169,8 +161,8 @@ export def DoToggleBlockVisual(): void
     var lastline: number = line("'>")
     var lines: list<string> = getline(firstline, lastline)
 
-    var first_is_bopen: bool = match(lines[0], '^\s*' .. markers.bopen .. '\s*$') != -1
-    var last_is_bclose: bool = match(lines[-1], '^\s*' .. markers.bclose .. '\s*$') != -1
+    var first_is_bopen: bool = match(lines[0], markers.patterns.bopen) != -1
+    var last_is_bclose: bool = match(lines[-1], markers.patterns.bclose) != -1
 
     if first_is_bopen != last_is_bclose
         echoerr 'Comentador: First or last line missing block marker'

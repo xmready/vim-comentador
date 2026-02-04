@@ -1,54 +1,79 @@
 vim9script
 
-export def DoSelectComment(markers: dict<any>): string
-    var ln: string = getline('.')
+export def SelectTypeLine(
+        startln: number,
+        lines: list<string>,
+        markers: dict<any>
+): string
+    if match(lines, markers.patterns.inline) != -1
+        return 'inline'
+    endif
 
-    if match(ln, markers.patterns.inline) == 0
-        normal! V
-        return 'inline_comment'
-    elseif match(ln, markers.patterns.inline_block) != -1
-        normal! V
-        return 'inline_block_comment'
-    elseif match(ln, markers.patterns.bopen) == 0
-        normal! ^
-        var endln: number = search(markers.bclose, 'nW')
-        var mid_open: number = search(markers.patterns.bopen, 'nW', endln - 1)
-        if mid_open == 0
-            execute 'normal! V' .. endln .. 'G'
-            return 'block_comment'
-        else
-            normal! V
-            return 'missing_bmark'
+    if !empty(markers.bopen) && !empty(markers.bclose)
+        if match(lines, markers.patterns.inline_block) != -1
+            return 'inline_block'
+        elseif match(lines, markers.patterns.bopen) == 0
+            cursor(startln, 1)
+            var block_end: number = search(markers.patterns.bclose, 'nW')
+            var mid_open: number = search(markers.patterns.bopen, 'nW', block_end - 1)
+            if (mid_open != 0) || (block_end == 0)
+                return 'missing_bmark'
+            else
+                execute 'normal! V' .. block_end .. "G\<Esc>"
+                return 'block'
+            endif
+        elseif match(lines, markers.patterns.bclose) == 0
+            cursor(startln, 1)
+            var block_start: number = search(markers.patterns.bopen, 'bnW')
+            var mid_close: number = search(markers.patterns.bclose, 'bnW', block_start - 1)
+            if (mid_close != 0) || (block_start == 0)
+                return 'missing_bmark'
+            else
+                execute 'normal! V' .. block_start .. "G\<Esc>"
+                return 'block'
+            endif
         endif
-    elseif match(ln, markers.patterns.bclose) == 0
-        var startln: number = search(markers.bopen, 'bnW')
-        var mid_open: number = search(markers.patterns.bclose, 'bnW', startln - 1)
-        if mid_open == 0
-            execute 'normal! V' .. startln .. 'G'
-            return 'block_comment'
-        else
-            normal! V
-            return 'missing_bmark'
+
+        var block_start: number = search(markers.patterns.bopen, 'bnW')
+        var block_end: number = search(markers.patterns.bclose, 'nW')
+
+        if (block_start > 0) && (block_end > 0) && (block_start < block_end)
+            var mid_open: number = search(markers.patterns.bopen, 'nW', block_end - 1)
+            var mid_close: number = search(markers.patterns.bclose, 'bnW', block_start - 1)
+            if (mid_open == 0) && (mid_close == 0)
+                execute 'normal! ' .. block_start .. 'GV' .. block_end .. "G\<Esc>"
+                return 'block'
+            endif
         endif
     endif
 
-    var startln: number = search(markers.patterns.bopen, 'bnW')
-    var endln: number = search(markers.patterns.bclose, 'nW')
-
-    if (startln > 0) && (endln > 0) && (startln < endln)
-        var mid_open: number = search(markers.patterns.bopen, 'nW', endln - 1)
-        var mid_close: number = search(markers.patterns.bclose, 'bnW', startln - 1)
-        if mid_open == 0 && mid_close == 0
-            execute 'normal! ' .. startln .. 'GV' .. endln .. 'G'
-            return 'block_comment'
-        endif
-    endif
-
-    if match(ln, markers.patterns.blank) == 0
-        normal! V
-        return 'blank_line'
+    if match(lines, markers.patterns.blank) == 0
+        return 'blank'
     else
-        normal! V
+        return 'uncommented'
+    endif
+enddef
+
+export def SelectTypeRange(
+        lines: list<string>,
+        markers: dict<any>
+): string
+    if !empty(markers.bopen) && !empty(markers.bclose)
+        var first_is_bopen: bool = match(lines[0], markers.patterns.bopen) != -1
+        var last_is_bclose: bool = match(lines[-1], markers.patterns.bclose) != -1
+
+        if first_is_bopen != last_is_bclose
+            return 'missing_bmark'
+        elseif first_is_bopen && last_is_bclose
+            return 'block'
+        elseif match(lines, markers.patterns.inline_block) != -1
+            return 'inline_block'
+        endif
+    endif
+
+    if match(lines, markers.patterns.inline) != -1
+        return 'inline'
+    else
         return 'uncommented'
     endif
 enddef

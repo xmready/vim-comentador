@@ -1,24 +1,24 @@
 vim9script
 
-export def DoInlineComment(
+export def CommentInline(
         lines: list<string>,
         markers: dict<any>
 ): list<string>
     var mark_pattern: string = markers.patterns.inline_comment
 
-    return CommentLines(lines, markers, mark_pattern)
+    return Comment(lines, markers, mark_pattern)
 enddef
 
-export def DoInlineBlockComment(
+export def CommentInlineBlock(
         lines: list<string>,
         markers: dict<any>
 ): list<string>
     var mark_pattern: string = markers.patterns.inline_block_comment
 
-    return CommentLines(lines, markers, mark_pattern)
+    return Comment(lines, markers, mark_pattern)
 enddef
 
-export def DoBlockComment(
+export def CommentBlock(
         lines: list<string>,
         markers: dict<any>
 ): list<string>
@@ -33,7 +33,7 @@ export def DoBlockComment(
     return lines
 enddef
 
-def CommentLines(
+def Comment(
         lines: list<string>,
         markers: dict<any>,
         mark_pattern: string

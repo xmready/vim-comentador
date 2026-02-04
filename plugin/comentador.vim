@@ -12,31 +12,33 @@ g:loaded_comentador = 1
 
 import autoload '../autoload/comentador/toggle.vim'
 
-nnoremap <expr> <Plug>(ComentadorToggleOperator) toggle.SetOperator('inline', 'motion')
-nnoremap <expr> <Plug>(ComentadorToggle) toggle.SetOperator('inline', 'line')
+command! -range -bar Comentador call toggle.Toggle(<line1>, <line2>)
 
-nnoremap <expr> <Plug>(ComentadorToggleBlockOperator) toggle.SetOperator('block', 'motion')
-nnoremap <expr> <Plug>(ComentadorToggleBlock) toggle.SetOperator('block', 'line')
+nnoremap <expr> <Plug>(Comentador) toggle.Toggle()
+nnoremap <expr> <Plug>(ComentadorLine) toggle.Toggle() .. '_'
+xnoremap <expr> <Plug>(Comentador) toggle.Toggle()
 
-xnoremap <Plug>(ComentadorToggleVisual) <ScriptCmd>toggle.DoToggleVisual()<CR>
-xnoremap <Plug>(ComentadorToggleBlockVisual) <ScriptCmd>toggle.DoToggleBlockVisual()<CR>
+nnoremap <expr> <Plug>(ComentadorBlock) toggle.ToggleBlock()
+nnoremap <expr> <Plug>(ComentadorBlockLine) toggle.ToggleBlock() .. '_'
+xnoremap <expr> <Plug>(ComentadorBlock) toggle.ToggleBlock()
 
-if !hasmapto('<Plug>(ComentadorToggle)', 'n')
-    nnoremap gc <Plug>(ComentadorToggleOperator)
-    nnoremap gcc <Plug>(ComentadorToggle)
+
+if !hasmapto('<Plug>(Comentador)')
+    nnoremap gc <Plug>(Comentador)
+    xnoremap gc <Plug>(Comentador)
 endif
 
-if !hasmapto('<Plug>(ComentadorToggleBlock)', 'n')
-    nnoremap gb <Plug>(ComentadorToggleBlockOperator)
-    nnoremap gbb <Plug>(ComentadorToggleBlock)
+if !hasmapto('<Plug>(ComentadorLine)')
+    nnoremap gcc <Plug>(ComentadorLine)
 endif
 
-if !hasmapto('<Plug>(ComentadorToggleVisual)', 'x')
-    xnoremap gc <Plug>(ComentadorToggleVisual)
+if !hasmapto('<Plug>(ComentadorBlock)')
+    nnoremap gb <Plug>(ComentadorBlock)
+    xnoremap gb <Plug>(ComentadorBlock)
 endif
 
-if !hasmapto('<Plug>(ComentadorToggleBlockVisual)', 'x')
-    xnoremap gb <Plug>(ComentadorToggleBlockVisual)
+if !hasmapto('<Plug>(ComentadorBlockLine)')
+    nnoremap gbb <Plug>(ComentadorBlockLine)
 endif
 
 augroup comentador

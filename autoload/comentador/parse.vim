@@ -1,6 +1,6 @@
 vim9script
 
-export def DoParseComments(): dict<any>
+export def ParseComments(): dict<any>
     if exists('b:comentador_markers')
         return b:comentador_markers
     endif

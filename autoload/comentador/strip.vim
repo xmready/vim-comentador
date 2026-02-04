@@ -1,6 +1,6 @@
 vim9script
 
-export def DoStripBlock(
+export def StripBlock(
         lines: list<string>,
         markers: dict<any>
 ): list<string>
@@ -19,7 +19,7 @@ export def DoStripBlock(
     return lines
 enddef
 
-export def DoStripLine(
+export def StripLine(
         lines: list<string>,
         markers: dict<any>
 ): list<string>

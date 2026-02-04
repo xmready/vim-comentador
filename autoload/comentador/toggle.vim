@@ -4,181 +4,102 @@ import autoload './parse.vim'
 import autoload './select.vim'
 import autoload './strip.vim'
 import autoload './comment.vim'
+import autoload './utils.vim'
 
-var startln: number = 0
-
-export def SetOperator(type: string, mode: string): string
-    startln = line('.')
-    &operatorfunc = type == 'block' ? 'g:ComentadorToggleBlock' : 'g:ComentadorToggle'
-    return mode == 'line' ? 'g@_' : 'g@'
-enddef
-
-def g:ComentadorToggle(_: string): void
-    var markers: dict<any> = parse.DoParseComments()
-    var firstline: number = line("'[")
-    var lastline: number = line("']")
-    execute 'normal! ' .. startln .. 'G'
-    var type: string = select.DoSelectComment(markers)
-    echom 'Comentador: ' .. type
-    execute "normal! \<Esc>"
-
-    if type == 'block_comment'
-        firstline = line("'<")
-        lastline = line("'>")
+export def Toggle(...args: list<any>): any
+    if !args
+        &operatorfunc = getstacktrace()[0].funcref
+        return 'g@'
     endif
 
-    var lines: list<string> = getline(firstline, lastline)
-    var has_inline: bool = (indexof(lines, (_, str) => match(str, markers.patterns.inline_either) != -1) != -1)
+    var [firstln, lastln] = utils.GetLineRange(args)
+    var markers: dict<any> = parse.ParseComments()
+    var lines: list<string> = getline(firstln, lastln)
+    var type: string = ''
+    var has_range: bool = (firstln != lastln)
+
+    if !has_range
+        type = select.SelectTypeLine(firstln, lines, markers)
+    else
+        type = select.SelectTypeRange(lines, markers)
+    endif
 
     if type == 'missing_bmark'
         echoerr 'Comentador: No matching block marker found'
-        return
-    elseif type == 'block_comment'
-        lines = strip.DoStripBlock(lines, markers)
-    elseif (type == 'inline_comment' || type == 'inline_block_comment') || has_inline
-        lines = strip.DoStripLine(lines, markers)
-    elseif type == 'uncommented' || type == 'blank_line'
-        lines = comment.DoInlineComment(lines, markers)
+        return null
+    elseif type == 'block'
+        [firstln, lastln] = [line("'<"), line("'>")]
+        lines = getline(firstln, lastln)
+        lines = strip.StripBlock(lines, markers)
+        utils.SetLines(firstln, lastln, lines, 1)
+        return null
+    elseif (type == 'inline') || (type == 'inline_block')
+        lines = strip.StripLine(lines, markers)
+    elseif (type == 'uncommented') || (type == 'blank')
+        lines = comment.CommentInline(lines, markers)
     endif
 
-    setline(firstline, lines)
+    utils.SetLines(firstln, lastln, lines)
 
-    if len(lines) < (lastline - firstline + 1)
-        deletebufline('', firstline + len(lines), lastline)
+    if (type == 'blank') && !has_range
+        utils.InsertAtMarker(!empty(markers.iclose), markers.iclose)
     endif
 
-    if type == 'blank_line' && !empty(markers.iclose) && firstline == lastline
-        search(markers.iclose, 'W', line('.'))
-        normal! h
-        startinsert
-    elseif startln < lastline
-        normal! ']
-    else
-        normal! '[
-    endif
+    return null
 enddef
 
-def g:ComentadorToggleBlock(_: string): void
-    var markers: dict<any> = parse.DoParseComments()
+export def ToggleBlock(...args: list<any>): any
+    if !args
+        &operatorfunc = getstacktrace()[0].funcref
+        return 'g@'
+    endif
+
+    var markers: dict<any> = parse.ParseComments()
 
     if empty(markers.bopen) || empty(markers.bclose)
         echoerr 'Comentador: Block comment markers unavailable for this filetype'
-        return
+        return null
     endif
 
-    var firstline: number = line("'[")
-    var lastline: number = line("']")
-    execute 'normal! ' .. startln .. 'G'
-    var type: string = select.DoSelectComment(markers)
-    execute "normal! \<Esc>"
-
-    if type == 'missing_bmark'
-        echoerr 'Comentador: No matching block marker found'
-        return
-    elseif type == 'block_comment'
-        echoerr 'Comentador: Already inside a block comment'
-        return
-    endif
-
-    var lines: list<string> = getline(firstline, lastline)
+    var [firstln, lastln] = utils.GetLineRange(args)
+    var lines: list<string> = getline(firstln, lastln)
+    var type: string = ''
     var same_markers: bool = (markers.bopen == markers.iopen) && (markers.bclose == markers.iclose)
-    var has_inline_block: bool = (indexof(lines, (_, str) => match(str, markers.patterns.inline_block) != -1) != -1)
-    var has_block: bool = (indexof(lines, (_, str) => match(str, markers.patterns.block_either) != -1) != -1)
+    var has_block: bool = match(lines, markers.patterns.block_either) != -1
+    var has_range: bool = (firstln != lastln)
 
-    if !has_inline_block && has_block
+    if !has_range
+        type = select.SelectTypeLine(firstln, lines, markers)
+    else
+        type = select.SelectTypeRange(lines, markers)
+    endif
+
+    if type == 'missing_bmark'
+        echoerr 'Comentador: No matching block marker found'
+        return null
+    elseif type == 'block'
+        echoerr 'Comentador: Already inside a block comment'
+        return null
+    elseif (type != 'inline_block') && has_block
         echoerr 'Comentador: Range contains multi-line block comment'
-        return
-    elseif (type == 'inline_comment' && same_markers) || type == 'inline_block_comment' || (type != 'inline_comment' && has_inline_block)
-        lines = strip.DoStripLine(lines, markers)
-    elseif type == 'uncommented' || type == 'blank_line'
-        lines = comment.DoInlineBlockComment(lines, markers)
-    elseif type == 'inline_comment'
+        return null
+    elseif type == 'inline' && !has_range
         echoerr 'Comentador: Existing inline comment'
-        return
-    endif
-
-    setline(firstline, lines)
-
-    if type == 'blank_line' && firstline == lastline
-        search(markers.bclose, 'W', line('.'))
-        normal! h
-        startinsert
-    elseif startln < lastline
-        normal! ']
+        return null
+    elseif (type == 'inline_block') || (type == 'inline' && same_markers)
+        lines = strip.StripLine(lines, markers)
+    elseif (type == 'uncommented' || type == 'blank') && !has_range
+        lines = comment.CommentInlineBlock(lines, markers)
     else
-        normal! '[
-    endif
-enddef
-
-export def DoToggleVisual(): void
-    execute "normal! \<Esc>"
-
-    var markers: dict<any> = parse.DoParseComments()
-    var firstline: number = line("'<")
-    var lastline: number = line("'>")
-    var lines: list<string> = getline(firstline, lastline)
-
-    var first_is_bopen: bool = 0
-    var last_is_bclose: bool = 0
-    var has_inline: bool = (indexof(lines, (_, str) => match(str, markers.patterns.inline_either) != -1) != -1)
-
-    if !empty(markers.bopen)
-        first_is_bopen = match(lines[0], markers.patterns.bopen) != -1
-        last_is_bclose = match(lines[-1], markers.patterns.bclose) != -1
+        lines = comment.CommentBlock(lines, markers)
+        append(firstln, ['', ''])
     endif
 
-    if first_is_bopen != last_is_bclose
-        echoerr 'Comentador: First or last line missing block marker'
-        return
-    elseif first_is_bopen && last_is_bclose
-        lines = strip.DoStripBlock(lines, markers)
-    elseif has_inline
-        lines = strip.DoStripLine(lines, markers)
-    else
-        lines = comment.DoInlineComment(lines, markers)
+    utils.SetLines(firstln, lastln, lines)
+
+    if (type == 'blank') && !has_range
+        utils.InsertAtMarker(!empty(markers.bclose), markers.bclose)
     endif
 
-    setline(firstline, lines)
-
-    if len(lines) < (lastline - firstline + 1)
-        deletebufline('', firstline + len(lines), lastline)
-    endif
-
-    normal! `<^
-enddef
-
-export def DoToggleBlockVisual(): void
-    execute "normal! \<Esc>"
-
-    var markers: dict<any> = parse.DoParseComments()
-
-    if empty(markers.bopen) || empty(markers.bclose)
-        echoerr 'Comentador: Block comment markers unavailable for this filetype'
-        return
-    endif
-
-    var firstline: number = line("'<")
-    var lastline: number = line("'>")
-    var lines: list<string> = getline(firstline, lastline)
-
-    var first_is_bopen: bool = match(lines[0], markers.patterns.bopen) != -1
-    var last_is_bclose: bool = match(lines[-1], markers.patterns.bclose) != -1
-
-    if first_is_bopen != last_is_bclose
-        echoerr 'Comentador: First or last line missing block marker'
-        return
-    elseif first_is_bopen && last_is_bclose
-        lines = strip.DoStripBlock(lines, markers)
-    else
-        lines = comment.DoBlockComment(lines, markers)
-        append(firstline, ['', ''])
-    endif
-
-    setline(firstline, lines)
-
-    if len(lines) < (lastline - firstline + 1)
-        deletebufline('', firstline + len(lines), lastline)
-    endif
-
-    normal! `<^
+    return null
 enddef

@@ -4,11 +4,12 @@ A Vim9script plugin for toggling inline and block comments with full operator-pe
 
 ## Features
 
-- Operator-pending mode: `gc{motion}` and `gb{motion}`
-- Line-wise commands: `gcc` and `gbb`
-- Visual mode: `gc` and `gb`
+- Operator-pending toggle: `gc{motion}` and `gb{motion}`
+- Line-wise toggle: `gcc` and `gbb`
+- Visual toggle: `gc` and `gb`
+- Smart toggle comments or uncomments based on context
+- More powerful `gcc` uncomments inline, block & inline-block
 - Automatic marker detection from `&commentstring` and `&comments`
-- Smart toggle: comments or uncomments based on context
 - Supports inline (`//`), inline-block (`/* */`), and multi-line block comments
 
 ## Requirements

@@ -1,2 +1,202 @@
-*comentador.txt*	Simple yet powerful commenting plugin for vim
-*comentador* *vim-comentador*
+*comentador.txt*  Toggle comments in Vim9
+
+Author:  xmready
+Repo:    https://github.com/xmready/vim-comentador
+License: MIT (see |comentador-license|)
+
+Requires Vim 9.0+
+
+INTRODUCTION                                    *comentador*
+
+Comentador toggles comments using operator-pending motions, line-wise
+commands, or visual selections. Comment markers are automatically detected
+from 'commentstring' and 'comments' options.
+
+MAPPINGS                                        *comentador-mappings*
+
+                                                *gc*
+gc{motion}              Toggle inline comments over {motion}.
+
+                        Commenting adds inline markers to each line.
+                        Uncommenting removes inline, inline-block, and
+                        multi-line block comments. Errors on improper block
+                        usage.
+
+                                                *gcc*
+gcc                     Toggle inline comment on [count] lines.
+
+                        Commenting adds inline markers to each line.
+                        Uncommenting removes inline, inline-block, and
+                        multi-line block comments. Errors on improper block
+                        usage.
+
+                                                *gb*
+gb{motion}              Toggle inline-block comments over {motion}.
+
+                        Commenting adds block markers on the same line
+                        (e.g., /* text */). Uncommenting removes inline-block
+                        comments only. Errors if block markers unavailable,
+                        cursor inside block comment, improper block usage,
+                        range contains block markers, or line has inline
+                        comment.
+
+                                                *gbb*
+gbb                     Toggle inline-block comment on [count] lines.
+
+                        Commenting adds block markers on the same line
+                        (e.g., /* text */). Uncommenting removes inline-block
+                        comments only. Errors if block markers unavailable,
+                        cursor inside block comment, improper block usage,
+                        range contains block markers, or line has inline
+                        comment.
+
+                                                *gcu*
+gcu                     Uncomment contiguous inline-commented lines.
+
+                        Equivalent to gcgc. Selects all adjacent commented
+                        lines (including surrounding blank lines) and removes
+                        inline, inline-block, and multi-line block comments.
+
+                                                *gbu*
+gbu                     Uncomment contiguous inline-block commented lines.
+
+                        Equivalent to gbgb. Selects all adjacent inline-block
+                        commented lines and removes the block markers.
+
+                                                *v_gc*
+{Visual}gc              Toggle inline comments on selected lines.
+
+                        Commenting adds inline markers to each line.
+                        Uncommenting removes multi-line block comments (if
+                        selection spans from opening to closing marker line),
+                        inline comments, and inline-block comments. Errors on
+                        mismatched block markers in selection.
+
+                                                *v_gb*
+{Visual}gb              Toggle multi-line block comment around selection.
+
+                        Commenting wraps selection with block markers on
+                        separate lines. Uncommenting removes the marker lines
+                        if selection spans the entire block. Errors if block
+                        markers unavailable or mismatched in selection.
+
+                                                *comentador-text-objects*
+Text objects ~
+
+The gc and gb mappings work as text objects with other operators:
+
+    dgc                 Delete contiguous commented lines
+    cgc                 Change contiguous commented lines
+    ygc                 Yank contiguous commented lines
+    dgb                 Delete contiguous inline-block commented lines
+    cgb                 Change contiguous inline-block commented lines
+
+Blank lines adjacent to comment blocks are included in the selection. When
+used with d (delete) or y (yank), leading blank lines are trimmed but trailing
+blank lines are preserved (outer selection). When used with c (change), blank
+lines are trimmed from both ends (inner selection), leaving only the commented
+content for replacement.
+
+COMMANDS                                        *comentador-commands*
+
+                                                *:Comentador*
+:[range]Comentador      Toggle inline comments on [range].
+
+                        Without a range, operates on the current line.
+                        With a range, operates on all lines in the range.
+                        Equivalent to gc{motion} for the specified lines.
+
+CUSTOMIZATION                                   *comentador-customization*
+
+                                                *comentador-plug-mappings*
+Plug mappings ~
+
+Override default mappings using <Plug> mappings:
+
+    <Plug>(Comentador)
+        gc operator (Normal, Visual, Operator-pending)
+
+    <Plug>(ComentadorLine)
+        gcc command (Normal)
+
+    <Plug>(ComentadorBlock)
+        gb operator (Normal, Visual, Operator-pending)
+
+    <Plug>(ComentadorBlockLine)
+        gbb command (Normal)
+
+Example: >
+    nmap <leader>c  <Plug>(Comentador)
+    nmap <leader>cc <Plug>(ComentadorLine)
+    xmap <leader>c  <Plug>(Comentador)
+    omap <leader>c  <Plug>(Comentador)
+<
+                                                *comentador-markers*
+Comment markers ~
+
+Markers are parsed from 'commentstring' and 'comments' options and cached in
+|b:comentador_markers|. For unsupported filetypes, set 'commentstring' for
+inline comments. If block markers are missing (no s1 and ex flags in
+'comments'), add them to the existing value: >
+
+    autocmd FileType apache setlocal commentstring=#\ %s
+    autocmd FileType myfile setlocal comments+=s1:/*,ex:*/
+<
+If no comment format is defined for a filetype, all mappings will error with
+"No comment format defined for this filetype".
+
+                                                *b:comentador_markers*
+b:comentador_markers    Buffer-local dictionary containing parsed comment
+                        markers with the following structure:
+
+                        Base markers:
+                            iopen       Inline comment opening marker
+                            iclose      Inline comment closing marker
+                                        (empty if not applicable)
+                            bopen       Block comment opening marker
+                            bclose      Block comment closing marker
+
+                        patterns        Pre-computed regex patterns:
+                            blank           Matches blank lines
+                            line            Captures line structure
+                            inline          Matches inline-commented lines
+                            inline_comment  Substitution for inline commenting
+                            inline_strip    Pattern for removing inline markers
+                            inline_either   Matches inline or inline-block
+                            blank_or_block  Matches blank or block marker lines
+
+                        The following patterns require block markers:
+                            bopen           Matches block opening marker line
+                            bclose          Matches block closing marker line
+                            block_either    Matches either block marker line
+                            inline_block    Matches inline-block commented lines
+                            inline_block_comment
+                                            Substitution for inline-block
+                            inline_block_strip
+                                            Pattern for removing inline-block
+
+                        flags           Pre-computed boolean flags:
+                            has_bmarks      Block markers are available
+                            has_iclose      Inline close marker exists
+                            same_markers    Block and inline markers identical
+
+ABOUT                                           *comentador-about*
+
+                                                *comentador-license*
+License: MIT
+
+Copyright (c) xmready
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+Repository: https://github.com/xmready/vim-comentador
+
+ vim:tw=78:et:ft=help:norl:

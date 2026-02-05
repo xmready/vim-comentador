@@ -104,7 +104,7 @@ enddef
 
 export def ToggleObject(
         obj_type: string,
-        inner: bool = false
+        inner: bool = 0
 ): void
     var markers: dict<any> = parse.ParseComments()
 

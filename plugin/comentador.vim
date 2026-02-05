@@ -14,18 +14,22 @@ import autoload '../autoload/comentador/toggle.vim'
 
 command! -range -bar Comentador call toggle.Toggle(<line1>, <line2>)
 
-nnoremap <expr> <Plug>(Comentador) toggle.Toggle()
-nnoremap <expr> <Plug>(ComentadorLine) toggle.Toggle() .. '_'
-xnoremap <expr> <Plug>(Comentador) toggle.Toggle()
+nnoremap <expr>   <Plug>(Comentador) toggle.Toggle()
+nnoremap <expr>   <Plug>(ComentadorLine) toggle.Toggle() .. '_'
+xnoremap <expr>   <Plug>(Comentador) toggle.Toggle()
+onoremap <silent> <Plug>(Comentador) :<C-U>call <SID>toggle.ToggleObject('inline', get(v:, 'operator', '') ==# 'c')<CR>
 
-nnoremap <expr> <Plug>(ComentadorBlock) toggle.ToggleBlock()
-nnoremap <expr> <Plug>(ComentadorBlockLine) toggle.ToggleBlock() .. '_'
-xnoremap <expr> <Plug>(ComentadorBlock) toggle.ToggleBlock()
+nnoremap <expr>   <Plug>(ComentadorBlock) toggle.ToggleBlock()
+nnoremap <expr>   <Plug>(ComentadorBlockLine) toggle.ToggleBlock() .. '_'
+xnoremap <expr>   <Plug>(ComentadorBlock) toggle.ToggleBlock()
+onoremap <silent> <Plug>(ComentadorBlock) :<C-U>call <SID>toggle.ToggleObject('block', get(v:, 'operator', '') ==# 'c')<CR>
 
 
 if !hasmapto('<Plug>(Comentador)')
-    nnoremap gc <Plug>(Comentador)
-    xnoremap gc <Plug>(Comentador)
+    nnoremap gc  <Plug>(Comentador)
+    xnoremap gc  <Plug>(Comentador)
+    onoremap gc  <Plug>(Comentador)
+    nnoremap gcu <Plug>(Comentador)<Plug>(Comentador)
 endif
 
 if !hasmapto('<Plug>(ComentadorLine)')
@@ -33,8 +37,10 @@ if !hasmapto('<Plug>(ComentadorLine)')
 endif
 
 if !hasmapto('<Plug>(ComentadorBlock)')
-    nnoremap gb <Plug>(ComentadorBlock)
-    xnoremap gb <Plug>(ComentadorBlock)
+    nnoremap gb  <Plug>(ComentadorBlock)
+    xnoremap gb  <Plug>(ComentadorBlock)
+    onoremap gb  <Plug>(ComentadorBlock)
+    nnoremap gbu <Plug>(ComentadorBlock)<Plug>(ComentadorBlock)
 endif
 
 if !hasmapto('<Plug>(ComentadorBlockLine)')

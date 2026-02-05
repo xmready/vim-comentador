@@ -25,7 +25,7 @@ export def Toggle(...args: list<any>): any
     endif
 
     if type == 'missing_bmark'
-        echoerr 'Comentador: No matching block marker found'
+        echoerr 'Comentador: Improper block usage'
         return null
     elseif type == 'block'
         [firstln, lastln] = [line("'<"), line("'>")]
@@ -74,7 +74,7 @@ export def ToggleBlock(...args: list<any>): any
     endif
 
     if type == 'missing_bmark'
-        echoerr 'Comentador: No matching block marker found'
+        echoerr 'Comentador: Improper block usage'
         return null
     elseif type == 'block'
         echoerr 'Comentador: Already inside a block comment'
@@ -101,4 +101,46 @@ export def ToggleBlock(...args: list<any>): any
     endif
 
     return null
+enddef
+
+export def ToggleObject(
+        obj_type: string,
+        inner: bool = false
+): void
+    var markers: dict<any> = parse.ParseComments()
+
+    if obj_type == 'block' && !markers.flags.has_bmarks
+        return
+    endif
+
+    var [startln, endln] = [line('.'), line('.')]
+    var lines: list<string> = getline(startln, endln)
+    var type: string = select.SelectTypeLine(startln, lines, markers)
+
+    if type == 'block'
+        [startln, endln] = [line("'<"), line("'>")]
+        [startln, endln] = select.SelectExpandBlank(startln, endln)
+    else
+        var pattern: string
+        if obj_type == 'block'
+            pattern = markers.patterns.inline_block
+        else
+            pattern = markers.flags.has_bmarks
+                ? markers.patterns.inline_either
+                : markers.patterns.inline
+        endif
+
+        [startln, endln] = select.SelectMultiInline(pattern, startln, endln)
+
+        if !startln
+            normal! V
+            return
+        endif
+    endif
+
+    [startln, endln] = select.SelectTrimBlank(startln, endln, inner)
+
+    if startln <= endln
+        execute 'normal! ' .. startln .. 'GV' .. endln .. 'G'
+    endif
 enddef

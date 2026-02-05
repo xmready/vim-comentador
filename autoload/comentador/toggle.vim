@@ -76,15 +76,14 @@ export def ToggleBlock(...args: list<any>): any
     if type == 'missing_bmark'
         echoerr 'Comentador: Improper block usage'
         return null
-    elseif type == 'block'
-        echoerr 'Comentador: Already inside a block comment'
-        return null
     elseif (type != 'inline_block') && has_block
         echoerr 'Comentador: Range contains multi-line block comment'
         return null
     elseif type == 'inline' && !has_range
         echoerr 'Comentador: Existing inline comment'
         return null
+    elseif type == 'block'
+        lines = strip.StripBlock(lines, markers)
     elseif (type == 'inline_block') || (type == 'inline' && markers.flags.same_markers)
         lines = strip.StripLine(lines, markers)
     elseif (type == 'uncommented' || type == 'blank') && !has_range

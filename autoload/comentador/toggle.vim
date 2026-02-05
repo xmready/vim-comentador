@@ -42,7 +42,7 @@ export def Toggle(...args: list<any>): any
     utils.SetLines(firstln, lastln, lines)
 
     if (type == 'blank') && !has_range
-        utils.InsertAtMarker(!empty(markers.iclose), markers.iclose)
+        utils.InsertAtMarker(markers.flags.has_iclose, markers.iclose)
     endif
 
     return null
@@ -56,7 +56,7 @@ export def ToggleBlock(...args: list<any>): any
 
     var markers: dict<any> = parse.ParseComments()
 
-    if empty(markers.bopen) || empty(markers.bclose)
+    if !markers.flags.has_bmarks
         echoerr 'Comentador: Block comment markers unavailable for this filetype'
         return null
     endif
@@ -64,7 +64,6 @@ export def ToggleBlock(...args: list<any>): any
     var [firstln, lastln] = utils.GetLineRange(args)
     var lines: list<string> = getline(firstln, lastln)
     var type: string = ''
-    var same_markers: bool = (markers.bopen == markers.iopen) && (markers.bclose == markers.iclose)
     var has_block: bool = match(lines, markers.patterns.block_either) != -1
     var has_range: bool = (firstln != lastln)
 
@@ -86,7 +85,7 @@ export def ToggleBlock(...args: list<any>): any
     elseif type == 'inline' && !has_range
         echoerr 'Comentador: Existing inline comment'
         return null
-    elseif (type == 'inline_block') || (type == 'inline' && same_markers)
+    elseif (type == 'inline_block') || (type == 'inline' && markers.flags.same_markers)
         lines = strip.StripLine(lines, markers)
     elseif (type == 'uncommented' || type == 'blank') && !has_range
         lines = comment.CommentInlineBlock(lines, markers)
@@ -98,7 +97,7 @@ export def ToggleBlock(...args: list<any>): any
     utils.SetLines(firstln, lastln, lines)
 
     if (type == 'blank') && !has_range
-        utils.InsertAtMarker(!empty(markers.bclose), markers.bclose)
+        utils.InsertAtMarker(1, markers.bclose)
     endif
 
     return null

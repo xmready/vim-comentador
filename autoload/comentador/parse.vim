@@ -50,41 +50,14 @@ export def ParseComments(): dict<any>
 
     b:comentador_markers.patterns = BuildPatterns(b:comentador_markers)
 
+    b:comentador_markers.flags = {
+        'has_bmarks': !empty(b:comentador_markers.bopen) && !empty(b:comentador_markers.bclose),
+        'has_iclose': !empty(b:comentador_markers.iclose),
+        'same_markers': (b:comentador_markers.bopen == b:comentador_markers.iopen)
+            && (b:comentador_markers.bclose == b:comentador_markers.iclose),
+    }
+
     return b:comentador_markers
-enddef
-
-def BuildPatterns(markers: dict<any>): dict<string>
-    var patterns: dict<string> = {}
-
-    patterns.blank = '^\s*$'
-    patterns.line = '\(^\s*\)\(.*\)\($\)'
-
-    patterns.inline = '^\s*' .. markers.iopen .. '.*'
-        .. (empty(markers.iclose) ? '$' : markers.iclose .. '\s*$')
-
-    patterns.inline_comment = '\1' .. markers.iopen
-        .. (empty(markers.iclose) ? ' \2' : ' \2 ' .. markers.iclose) .. '\3'
-
-    patterns.inline_strip = '^\s*\zs' .. markers.iopen .. '\s*\ze'
-        .. (empty(markers.iclose) ? '' : '\|\zs\s*' .. markers.iclose .. '\s*\ze$')
-
-    if !empty(markers.bopen) && !empty(markers.bclose)
-        patterns.bopen = '^\s*' .. markers.bopen .. '\s*$'
-        patterns.bclose = '^\s*' .. markers.bclose .. '\s*$'
-        patterns.block_either = patterns.bopen .. '\|' .. patterns.bclose
-        patterns.inline_block = '^\s*' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$'
-        patterns.inline_block_comment = '\1' .. markers.bopen .. ' \2 ' .. markers.bclose .. '\3'
-        patterns.inline_either = patterns.inline .. '\|' .. patterns.inline_block
-        patterns.blank_or_block = patterns.blank .. '\|' .. patterns.block_either
-
-        patterns.inline_block_strip = '^\(\s*\)' .. markers.bopen
-            .. '\s*\(.\{-}\)\s*' .. markers.bclose .. '\s*$'
-    else
-        patterns.inline_either = patterns.inline
-        patterns.blank_or_block = patterns.blank
-    endif
-
-    return patterns
 enddef
 
 def ParseBlockMarkers(): list<string>
@@ -133,4 +106,38 @@ def ParseInlineMarker(): string
 
     sort(candidates, (a, b) => len(a) - len(b))
     return candidates[0]
+enddef
+
+def BuildPatterns(markers: dict<any>): dict<string>
+    var patterns: dict<string> = {}
+
+    patterns.blank = '^\s*$'
+    patterns.line = '\(^\s*\)\(.*\)\($\)'
+
+    patterns.inline = '^\s*' .. markers.iopen .. '.*'
+        .. (empty(markers.iclose) ? '$' : markers.iclose .. '\s*$')
+
+    patterns.inline_comment = '\1' .. markers.iopen
+        .. (empty(markers.iclose) ? ' \2' : ' \2 ' .. markers.iclose) .. '\3'
+
+    patterns.inline_strip = '^\s*\zs' .. markers.iopen .. '\s*\ze'
+        .. (empty(markers.iclose) ? '' : '\|\zs\s*' .. markers.iclose .. '\s*\ze$')
+
+    if !empty(markers.bopen) && !empty(markers.bclose)
+        patterns.bopen = '^\s*' .. markers.bopen .. '\s*$'
+        patterns.bclose = '^\s*' .. markers.bclose .. '\s*$'
+        patterns.block_either = patterns.bopen .. '\|' .. patterns.bclose
+        patterns.inline_block = '^\s*' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$'
+        patterns.inline_block_comment = '\1' .. markers.bopen .. ' \2 ' .. markers.bclose .. '\3'
+        patterns.inline_either = patterns.inline .. '\|' .. patterns.inline_block
+        patterns.blank_or_block = patterns.blank .. '\|' .. patterns.block_either
+
+        patterns.inline_block_strip = '^\(\s*\)' .. markers.bopen
+            .. '\s*\(.\{-}\)\s*' .. markers.bclose .. '\s*$'
+    else
+        patterns.inline_either = patterns.inline
+        patterns.blank_or_block = patterns.blank
+    endif
+
+    return patterns
 enddef

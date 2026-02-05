@@ -9,7 +9,7 @@ export def SelectTypeLine(
         return 'inline'
     endif
 
-    if !empty(markers.bopen) && !empty(markers.bclose)
+    if markers.flags.has_bmarks
         if match(lines, markers.patterns.inline_block) != -1
             return 'inline_block'
         elseif match(lines, markers.patterns.bopen) == 0
@@ -58,7 +58,7 @@ export def SelectTypeRange(
         lines: list<string>,
         markers: dict<any>
 ): string
-    if !empty(markers.bopen) && !empty(markers.bclose)
+    if markers.flags.has_bmarks
         var first_is_bopen: bool = match(lines[0], markers.patterns.bopen) != -1
         var last_is_bclose: bool = match(lines[-1], markers.patterns.bclose) != -1
 

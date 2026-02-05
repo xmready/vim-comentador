@@ -23,7 +23,7 @@ export def StripLine(
         lines: list<string>,
         markers: dict<any>
 ): list<string>
-    if !empty(markers.bopen) && !empty(markers.bclose)
+    if markers.flags.has_bmarks
         for i: number in range(len(lines))
             lines[i] = substitute(lines[i], markers.patterns.inline_strip, '', 'g')
             lines[i] = substitute(lines[i], markers.patterns.inline_block_strip, '\1\2', '')

@@ -10,15 +10,17 @@ export def SetLines(
         firstln: number,
         lastln: number,
         lines: list<string>,
-        reposition: bool = 0
+        reset_cursor: bool = 0
 ): void
-    setline(firstln, lines)
-
     if len(lines) < (lastln - firstln + 1)
         deletebufline('', firstln + len(lines), lastln)
+    elseif len(lines) > (lastln - firstln + 1)
+        append(firstln, ['', ''])
     endif
 
-    if reposition
+    setline(firstln, lines)
+
+    if reset_cursor
         execute 'normal! ' .. firstln .. 'G^'
     endif
 enddef

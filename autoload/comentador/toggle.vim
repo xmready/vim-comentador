@@ -79,7 +79,7 @@ export def ToggleBlock(...args: list<any>): any
     elseif (type != 'inline_block') && has_block
         echoerr 'Comentador: Range contains multi-line block comment'
         return null
-    elseif type == 'inline' && !has_range
+    elseif (type == 'inline') && !has_range && !markers.flags.same_markers
         echoerr 'Comentador: Existing inline comment'
         return null
     elseif type == 'block'

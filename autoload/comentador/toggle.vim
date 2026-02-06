@@ -33,9 +33,9 @@ export def Toggle(...args: list<any>): any
         lines = strip.StripBlock(lines, markers)
         utils.SetLines(firstln, lastln, lines, 1)
         return null
-    elseif (type == 'inline') || (type == 'inline_block')
+    elseif type =~ 'inline\|inline_block'
         lines = strip.StripLine(lines, markers)
-    elseif (type == 'uncommented') || (type == 'blank')
+    elseif type =~ 'uncommented\|blank'
         lines = comment.CommentInline(lines, markers)
     endif
 

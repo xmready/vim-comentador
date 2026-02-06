@@ -131,7 +131,6 @@ export def ToggleObject(
         [startln, endln] = select.SelectMultiInline(pattern, startln, endln)
 
         if !startln
-            normal! V
             return
         endif
     endif

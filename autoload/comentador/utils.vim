@@ -1,9 +1,16 @@
 vim9script
 
 export def GetLineRange(args: list<any>): list<number>
-    return len(args) > 1
-        ? [args[0], args[1]]
-        : [line("'["), line("']")]
+    echom string(args)
+
+    if len(args) > 1
+        return [args[0], args[1]]
+    elseif args[0] == 'char'
+        execute "normal! V\<Esc>"
+        return [line("'<"), line("'>")]
+    endif
+
+    return [line("'["), line("']")]
 enddef
 
 export def SetLines(

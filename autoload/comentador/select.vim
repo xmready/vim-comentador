@@ -47,7 +47,7 @@ export def SelectTypeLine(
         endif
     endif
 
-    if match(lines, markers.patterns.blank) == 0
+    if match(lines, '^\s*$') == 0
         return 'blank'
     else
         return 'uncommented'

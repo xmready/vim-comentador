@@ -111,9 +111,6 @@ enddef
 def BuildPatterns(markers: dict<any>): dict<string>
     var patterns: dict<string> = {}
 
-    patterns.blank = '^\s*$'
-    patterns.line = '\(^\s*\)\(.*\)\($\)'
-
     patterns.inline = '^\s*' .. markers.iopen .. '.*'
         .. (empty(markers.iclose) ? '$' : markers.iclose .. '\s*$')
 
@@ -130,13 +127,13 @@ def BuildPatterns(markers: dict<any>): dict<string>
         patterns.inline_block = '^\s*' .. markers.bopen .. '.*' .. markers.bclose .. '\s*$'
         patterns.inline_block_comment = '\1' .. markers.bopen .. ' \2 ' .. markers.bclose .. '\3'
         patterns.inline_either = patterns.inline .. '\|' .. patterns.inline_block
-        patterns.blank_or_block = patterns.blank .. '\|' .. patterns.block_either
+        patterns.blank_or_block = '^\s*$' .. '\|' .. patterns.block_either
 
         patterns.inline_block_strip = '^\(\s*\)' .. markers.bopen
             .. '\s*\(.\{-}\)\s*' .. markers.bclose .. '\s*$'
     else
         patterns.inline_either = patterns.inline
-        patterns.blank_or_block = patterns.blank
+        patterns.blank_or_block = '^\s*$'
     endif
 
     return patterns

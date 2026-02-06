@@ -38,15 +38,15 @@ def Comment(
         markers: dict<any>,
         mark_pattern: string
 ): list<string>
-    if indexof(lines, (_, str) => match(str, markers.patterns.blank) == -1) == -1
+    if indexof(lines, (_, str) => match(str, '^\s*$') == -1) == -1
         for i: number in range(len(lines))
-            lines[i] = substitute(lines[i], markers.patterns.line, mark_pattern, 'g')
+            lines[i] = substitute(lines[i], '\(^\s*\)\(.*\)\($\)', mark_pattern, 'g')
             lines[i] = trim(lines[i])
         endfor
     else
         for i: number in range(len(lines))
             if match(lines[i], markers.patterns.blank_or_block) == -1
-                lines[i] = substitute(lines[i], markers.patterns.line, mark_pattern, 'g')
+                lines[i] = substitute(lines[i], '\(^\s*\)\(.*\)\($\)', mark_pattern, 'g')
             endif
         endfor
     endif

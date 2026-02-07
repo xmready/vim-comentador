@@ -1,48 +1,38 @@
 vim9script
 
-export def ParseComments(): dict<any>
+export def ParseMarkers(): dict<any>
     if exists('b:comentador_markers')
         return b:comentador_markers
     endif
 
-    var iopen: string = ''
-    var iclose: string = ''
-    var bopen: string = ''
-    var bclose: string = ''
+    b:comentador_markers = {
+        'iopen': '',
+        'iclose': '',
+        'bopen': '',
+        'bclose': ''
+    }
 
-    var cms_parts: list<string> = split(&commentstring, '%s', 1)
-    var cms_open: string = get(cms_parts, 0, '')
-    var cms_close: string = get(cms_parts, 1, '')
+    const cms_parts: list<string> = split(&commentstring, '%s', 1)
 
-    if empty(cms_close)
-        iopen = cms_open
-        iclose = ''
-
-        [bopen, bclose] = ParseBlockMarkers()
+    if empty(cms_parts[1])
+        var bmarks: list<string> = ParseBlockMarkers()
+        b:comentador_markers.iopen = cms_parts[0]
+        b:comentador_markers.bopen = bmarks[0]
+        b:comentador_markers.bclose = bmarks[1]
     else
-        bopen = cms_open
-        bclose = cms_close
+        b:comentador_markers.iopen = ParseInlineMarker()
+        b:comentador_markers.bopen = cms_parts[0]
+        b:comentador_markers.bclose = cms_parts[1]
 
-        iopen = ParseInlineMarker()
-
-        if empty(iopen)
-            iopen = bopen
-            iclose = bclose
-        else
-            iclose = ''
+        if empty(b:comentador_markers.iopen)
+            b:comentador_markers.iopen = cms_parts[0]
+            b:comentador_markers.iclose = cms_parts[1]
         endif
     endif
 
-    if empty(iopen) && empty(bopen)
+    if empty(b:comentador_markers.iopen) && empty(b:comentador_markers.bopen)
         echoerr 'Comentador: No comment format defined for this filetype'
     endif
-
-    b:comentador_markers = {
-        'iopen': iopen,
-        'iclose': iclose,
-        'bopen': bopen,
-        'bclose': bclose
-    }
 
     for key in keys(b:comentador_markers)
         b:comentador_markers[key] = escape(trim(b:comentador_markers[key]), '/*')
@@ -61,16 +51,10 @@ export def ParseComments(): dict<any>
 enddef
 
 def ParseBlockMarkers(): list<string>
-    var bopen: string = ''
-    var bclose: string = ''
+    var [bopen, bclose] = ['', '']
 
-    for part in split(&comments, ',')
-        var colonpos: number = stridx(part, ':')
-        if colonpos == -1
-            continue
-        endif
-        var flags: string = strpart(part, 0, colonpos)
-        var str: string = strpart(part, colonpos + 1)
+    for item in ParseCommentsOption()
+        var [flags, str] = [item[0], item[1]]
 
         if flags =~ 's1' && !empty(str)
             bopen = str
@@ -87,13 +71,8 @@ enddef
 def ParseInlineMarker(): string
     var candidates: list<string> = []
 
-    for part in split(&comments, ',')
-        var colonpos: number = stridx(part, ':')
-        if colonpos == -1
-            continue
-        endif
-        var flags: string = strpart(part, 0, colonpos)
-        var str: string = strpart(part, colonpos + 1)
+    for item in ParseCommentsOption()
+        var [flags, str] = [item[0], item[1]]
 
         if empty(flags) && !empty(str)
             add(candidates, str)
@@ -106,6 +85,17 @@ def ParseInlineMarker(): string
 
     sort(candidates, (a, b) => len(a) - len(b))
     return candidates[0]
+enddef
+
+def ParseCommentsOption(): list<list<string>>
+    var parts: list<list<string>> = []
+    for part in split(&comments, ',')
+        var colonpos: number = stridx(part, ':')
+        if colonpos != -1
+            add(parts, [strpart(part, 0, colonpos), strpart(part, colonpos + 1)])
+        endif
+    endfor
+    return parts
 enddef
 
 def BuildPatterns(markers: dict<any>): dict<string>

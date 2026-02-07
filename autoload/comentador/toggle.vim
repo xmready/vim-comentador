@@ -13,7 +13,7 @@ export def Toggle(...args: list<any>): any
     endif
 
     var [firstln, lastln] = utils.GetLineRange(args)
-    var markers: dict<any> = parse.ParseComments()
+    var markers: dict<any> = parse.ParseMarkers()
     var lines: list<string> = getline(firstln, lastln)
     var type: string = ''
     var has_range: bool = (firstln != lastln)
@@ -54,7 +54,7 @@ export def ToggleBlock(...args: list<any>): any
         return 'g@'
     endif
 
-    var markers: dict<any> = parse.ParseComments()
+    var markers: dict<any> = parse.ParseMarkers()
 
     if !markers.flags.has_bmarks
         echoerr 'Comentador: Block comment markers unavailable for this filetype'
@@ -103,7 +103,7 @@ export def ToggleObject(
         obj_type: string,
         inner: bool = 0
 ): void
-    var markers: dict<any> = parse.ParseComments()
+    var markers: dict<any> = parse.ParseMarkers()
 
     if obj_type == 'block' && !markers.flags.has_bmarks
         return

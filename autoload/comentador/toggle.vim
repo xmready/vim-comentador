@@ -84,7 +84,7 @@ export def ToggleBlock(...args: list<any>): any
         lines = strip.StripLine(lines, markers)
     elseif (type =~ 'uncommented\|blank') && !has_range
         lines = comment.CommentInlineBlock(lines, markers)
-    elseif indexof(lines, (_, str) => match(str, '^\s*$') == -1) != -1
+    elseif match(lines, '^\s*\S') != -1
         lines = comment.CommentBlock(lines, markers)
     else
         return null

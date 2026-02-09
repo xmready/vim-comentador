@@ -25,25 +25,37 @@ xnoremap <expr>   <Plug>(ComentadorBlock) toggle.ToggleBlock()
 onoremap <silent> <Plug>(ComentadorBlock) :<C-U>call <SID>toggle.ToggleObject('block', get(v:, 'operator', '') ==# 'c')<CR>
 
 
-if !hasmapto('<Plug>(Comentador)')
+if !hasmapto('<Plug>(Comentador)', 'n')
     nnoremap gc  <Plug>(Comentador)
-    xnoremap gc  <Plug>(Comentador)
-    onoremap gc  <Plug>(Comentador)
     nnoremap gcu <Plug>(Comentador)<Plug>(Comentador)
 endif
 
-if !hasmapto('<Plug>(ComentadorLine)')
+if !hasmapto('<Plug>(Comentador)', 'x')
+    xnoremap gc  <Plug>(Comentador)
+endif
+
+if !hasmapto('<Plug>(Comentador)', 'o')
+    onoremap gc  <Plug>(Comentador)
+endif
+
+if !hasmapto('<Plug>(ComentadorLine)', 'n')
     nnoremap gcc <Plug>(ComentadorLine)
 endif
 
-if !hasmapto('<Plug>(ComentadorBlock)')
+if !hasmapto('<Plug>(ComentadorBlock)', 'n')
     nnoremap gb  <Plug>(ComentadorBlock)
-    xnoremap gb  <Plug>(ComentadorBlock)
-    onoremap gb  <Plug>(ComentadorBlock)
     nnoremap gbu <Plug>(ComentadorBlock)<Plug>(ComentadorBlock)
 endif
 
-if !hasmapto('<Plug>(ComentadorBlockLine)')
+if !hasmapto('<Plug>(ComentadorBlock)', 'x')
+    xnoremap gb  <Plug>(ComentadorBlock)
+endif
+
+if !hasmapto('<Plug>(ComentadorBlock)', 'o')
+    onoremap gb  <Plug>(ComentadorBlock)
+endif
+
+if !hasmapto('<Plug>(ComentadorBlockLine)', 'n')
     nnoremap gbb <Plug>(ComentadorBlockLine)
 endif
 

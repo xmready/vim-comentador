@@ -13,6 +13,7 @@ g:loaded_comentador = 1
 import autoload '../autoload/comentador/toggle.vim'
 
 command! -range -bar Comentador call toggle.Toggle(<line1>, <line2>)
+command! -range -bar ComentadorBlock call toggle.ToggleBlock(<line1>, <line2>)
 
 nnoremap <expr>   <Plug>(Comentador) toggle.Toggle()
 nnoremap <expr>   <Plug>(ComentadorLine) toggle.Toggle() .. '_'

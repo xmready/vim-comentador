@@ -4,6 +4,16 @@
 
 A Vim9script plugin for toggling both inline and block comments with full operator-pending support. While inspired by [tpope's Commentary plugin](https://github.com/tpope/vim-commentary), Comentador has its own unique behavior and features. A key difference being everything is a toggle. Another difference is not being able to comment an already commented line.
 
+
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Customization](#customization)
+- [Examples](#examples)
+- [License](#license)
+
 ## Requirements
 
 - Vim 9.0 or higher.
@@ -73,7 +83,7 @@ Use the `:help Comentador` command for a complete documentation of usage and beh
 
 The `gc` and `gb` mappings work as text objects with other operators:
 
-| Commands | Action                                                  |
+| Command | Action                                                  |
 |----------|---------------------------------------------------------|
 | `dgc`    | Delete any contiguous inline or single block comments   |
 | `cgc`    | Change any contiguous inline or single block comments   |
@@ -87,7 +97,7 @@ Blank lines adjacent to comment blocks are included in the selection. With `d` o
 
 ### Command-line Commands
 
-| Commands                  | Action                                                               |
+| Command                  | Action                                                               |
 |---------------------------|----------------------------------------------------------------------|
 | `:[range]Comentador`      | Toggle on comments [range] / Toggle off any comment type [range]     |
 | `:[range]ComentadorBlock` | Toggle on block comments [range] / Toggle off block comments [range] |

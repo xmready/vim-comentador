@@ -1,5 +1,7 @@
 # Comentador
 
+![demo](https://gist.githubusercontent.com/xmready/f45fb61b401ccb14900b2cca9e8e9550/raw/20b00a32cf4a1d9a0e83c634eb903956e8537d26/comentador-demo.gif)
+
 A Vim9script plugin for toggling both inline and block comments with full operator-pending support. While inspired by [tpope's Commentary plugin](https://github.com/tpope/vim-commentary), Comentador has its own unique behavior and features. A key difference being everything is a toggle. Another difference is not being able to comment an already commented line.
 
 ## Requirements

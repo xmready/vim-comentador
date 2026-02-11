@@ -79,7 +79,11 @@ export def ToggleBlock(...args: list<any>): any
     elseif (type == 'inline') && !has_range && !markers.flags.same_markers
         return null
     elseif type == 'block'
+        [firstln, lastln] = [line("'<"), line("'>")]
+        lines = getline(firstln, lastln)
         lines = strip.StripBlock(lines, markers)
+        utils.SetLines(firstln, lastln, lines, 1)
+        return null
     elseif (type == 'inline_block') || (type == 'inline' && markers.flags.same_markers)
         lines = strip.StripLine(lines, markers)
     elseif (type =~ 'uncommented\|blank') && !has_range

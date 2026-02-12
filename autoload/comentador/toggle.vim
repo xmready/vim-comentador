@@ -117,7 +117,7 @@ export def ToggleObject(
 
     if type == 'block'
         [startln, endln] = [line("'<"), line("'>")]
-        [startln, endln] = select.SelectExpandBlank(startln, endln)
+        [startln, endln] = utils.ExpandBlank(startln, endln)
     else
         var pattern: string
         if obj_type == 'block'
@@ -128,14 +128,14 @@ export def ToggleObject(
                 : markers.patterns.inline
         endif
 
-        [startln, endln] = select.SelectMultiInline(pattern, startln, endln)
+        [startln, endln] = utils.ExpandInline(pattern, startln, endln)
 
         if !startln
             return
         endif
     endif
 
-    [startln, endln] = select.SelectTrimBlank(startln, endln, inner)
+    [startln, endln] = utils.TrimBlank(startln, endln, inner)
 
     if startln <= endln
         execute 'normal! ' .. startln .. 'GV' .. endln .. 'G'

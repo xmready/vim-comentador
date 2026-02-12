@@ -29,17 +29,3 @@ export def SetLines(
         execute 'normal! ' .. firstln .. 'G^'
     endif
 enddef
-
-export def InsertAtMarker(
-        has_close: bool,
-        close: string
-): void
-    if has_close
-        search(close, 'W', line('.'))
-        normal! h
-    else
-        execute 'normal! A  '
-    endif
-
-    startinsert
-enddef

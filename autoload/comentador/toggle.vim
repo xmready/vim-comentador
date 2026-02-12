@@ -12,16 +12,38 @@ export def Toggle(...args: list<any>): any
         return 'g@'
     endif
 
-    var [firstln, lastln] = utils.GetLineRange(args)
-    var markers: dict<any> = parse.ParseMarkers()
-    var lines: list<string> = getline(firstln, lastln)
-    var type: string = ''
-    var has_range: bool = (firstln != lastln)
+    return CoreToggle('toggle', args)
+enddef
 
-    if !has_range
-        type = select.SelectTypeLine(firstln, lines, markers)
-    else
+export def ToggleBlock(...args: list<any>): any
+    if !args
+        &operatorfunc = getstacktrace()[0].funcref
+        return 'g@'
+    endif
+
+    return CoreToggle('toggle_block', args)
+enddef
+
+def CoreToggle(
+        mode: string,
+        args: list<any>
+): any
+    var markers: dict<any> = parse.ParseMarkers()
+
+    if mode == 'toggle_block' && !markers.flags.has_bmarks
+        echoerr 'Comentador: Block comment markers unavailable for this filetype'
+        return null
+    endif
+
+    var [firstln, lastln] = utils.GetLineRange(args)
+    var lines: list<string> = getline(firstln, lastln)
+    var has_range: bool = (firstln != lastln)
+    var type: string = ''
+
+    if has_range
         type = select.SelectTypeRange(lines, markers)
+    else
+        type = select.SelectTypeLine(firstln, lines, markers)
     endif
 
     if type == 'missing_bmark'
@@ -33,71 +55,47 @@ export def Toggle(...args: list<any>): any
         lines = strip.StripBlock(lines, markers)
         utils.SetLines(firstln, lastln, lines, 1)
         return null
-    elseif type =~ 'inline\|inline_block'
-        lines = strip.StripLine(lines, markers)
-    elseif type =~ 'uncommented\|blank'
-        lines = comment.CommentInline(lines, markers)
+    endif
+
+    if mode == 'toggle'
+        if type =~ 'inline\|inline_block'
+            lines = strip.StripLine(lines, markers)
+        elseif type =~ 'uncommented\|blank'
+            lines = comment.CommentInline(lines, markers)
+        endif
+    else
+        var has_block: bool = match(lines, markers.patterns.block_either) != -1
+
+        if (type !~ 'inline_block\|block' && has_block)
+            echoerr 'Comentador: Improper block usage'
+            return null
+        elseif (type == 'inline') && !has_range && !markers.flags.same_markers
+            return null
+        elseif (type == 'inline_block') || (type == 'inline' && markers.flags.same_markers)
+            lines = strip.StripLine(lines, markers)
+        elseif (type =~ 'uncommented\|blank') && !has_range
+            lines = comment.CommentInlineBlock(lines, markers)
+        elseif match(lines, '^\s*\S') != -1
+            lines = comment.CommentBlock(lines, markers)
+        else
+            return null
+        endif
     endif
 
     utils.SetLines(firstln, lastln, lines)
 
     if (type == 'blank') && !has_range
-        utils.InsertAtMarker(markers.flags.has_iclose, markers.iclose)
-    endif
+        var has_close: bool = (mode == 'toggle') ? markers.flags.has_iclose : 1
+        var close_mark: string = (mode == 'toggle') ? markers.iclose : markers.bclose
 
-    return null
-enddef
+        if has_close
+            search(close_mark, 'W', line('.'))
+            normal! h
+        else
+            execute 'normal! A  '
+        endif
 
-export def ToggleBlock(...args: list<any>): any
-    if !args
-        &operatorfunc = getstacktrace()[0].funcref
-        return 'g@'
-    endif
-
-    var markers: dict<any> = parse.ParseMarkers()
-
-    if !markers.flags.has_bmarks
-        echoerr 'Comentador: Block comment markers unavailable for this filetype'
-        return null
-    endif
-
-    var [firstln, lastln] = utils.GetLineRange(args)
-    var lines: list<string> = getline(firstln, lastln)
-    var type: string = ''
-    var has_block: bool = match(lines, markers.patterns.block_either) != -1
-    var has_range: bool = (firstln != lastln)
-
-    if !has_range
-        type = select.SelectTypeLine(firstln, lines, markers)
-    else
-        type = select.SelectTypeRange(lines, markers)
-    endif
-
-    if (type == 'missing_bmark') || (type !~ 'inline_block\|block' && has_block)
-        echoerr 'Comentador: Improper block usage'
-        return null
-    elseif (type == 'inline') && !has_range && !markers.flags.same_markers
-        return null
-    elseif type == 'block'
-        [firstln, lastln] = [line("'<"), line("'>")]
-        lines = getline(firstln, lastln)
-        lines = strip.StripBlock(lines, markers)
-        utils.SetLines(firstln, lastln, lines, 1)
-        return null
-    elseif (type == 'inline_block') || (type == 'inline' && markers.flags.same_markers)
-        lines = strip.StripLine(lines, markers)
-    elseif (type =~ 'uncommented\|blank') && !has_range
-        lines = comment.CommentInlineBlock(lines, markers)
-    elseif match(lines, '^\s*\S') != -1
-        lines = comment.CommentBlock(lines, markers)
-    else
-        return null
-    endif
-
-    utils.SetLines(firstln, lastln, lines)
-
-    if (type == 'blank') && !has_range
-        utils.InsertAtMarker(1, markers.bclose)
+        startinsert
     endif
 
     return null
